@@ -1,20 +1,31 @@
 module Main exposing (main)
 
 import Browser
-import Html exposing (Html, h1, text)
+import Html exposing (Html, div, h1, h4, li, p, text, ul)
+import Html.Attributes exposing (id)
 
 
 
 ---- MODEL ----
 
 
+type alias Todo =
+    { title : String
+    , content : String
+    }
+
+
+type alias Todos =
+    List Todo
+
+
 type alias Model =
-    {}
+    Maybe Todos
 
 
 init : ( Model, Cmd Msg )
 init =
-    ( {}, Cmd.none )
+    ( Just [ { title = "Test 1", content = "Test content" } ], Cmd.none )
 
 
 
@@ -34,9 +45,35 @@ update msg model =
 ---- VIEW ----
 
 
+renderTodo : Todo -> Html Msg
+renderTodo todo =
+    li []
+        [ h4 [] [ text todo.title ]
+        , p [] [ text todo.content ]
+        ]
+
+
+renderTodos : Maybe Todos -> List (Html Msg)
+renderTodos maybeTodos =
+    case maybeTodos of
+        Just todos ->
+            List.map
+                renderTodo
+                todos
+
+        Nothing ->
+            [ text "" ]
+
+
 view : Model -> Html Msg
 view model =
-    h1 [] [ text "Todo App" ]
+    div []
+        [ h1 []
+            [ text "Todo App" ]
+        , div
+            [ id "main" ]
+            [ ul [] (renderTodos model) ]
+        ]
 
 
 
