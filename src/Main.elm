@@ -1,8 +1,8 @@
 module Main exposing (main)
 
 import Browser
-import Html exposing (Html, div, h1, h4, li, p, text, ul)
-import Html.Attributes exposing (id)
+import Html exposing (Html, div, footer, h1, header, input, li, p, section, text, ul)
+import Html.Attributes exposing (autofocus, class, id, placeholder)
 
 
 
@@ -10,8 +10,8 @@ import Html.Attributes exposing (id)
 
 
 type alias Todo =
-    { title : String
-    , content : String
+    { content : String
+    , completed : Bool
     }
 
 
@@ -25,7 +25,7 @@ type alias Model =
 
 init : ( Model, Cmd Msg )
 init =
-    ( Just [ { title = "Test 1", content = "Test content" } ], Cmd.none )
+    ( Nothing, Cmd.none )
 
 
 
@@ -48,8 +48,7 @@ update msg model =
 renderTodo : Todo -> Html Msg
 renderTodo todo =
     li []
-        [ h4 [] [ text todo.title ]
-        , p [] [ text todo.content ]
+        [ p [] [ text todo.content ]
         ]
 
 
@@ -67,11 +66,15 @@ renderTodos maybeTodos =
 
 view : Model -> Html Msg
 view model =
-    div []
-        [ h1 []
-            [ text "Todo App" ]
-        , div
-            [ id "main" ]
+    div [ class "todoapp" ]
+        [ header []
+            [ h1 []
+                [ text "todos" ]
+            , input [ class "new-todo", placeholder "What needs to be done?", autofocus True ]
+                []
+            ]
+        , section
+            [ class "main" ]
             [ ul [] (renderTodos model) ]
         ]
 
