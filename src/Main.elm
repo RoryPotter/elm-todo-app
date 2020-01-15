@@ -1,8 +1,10 @@
 module Main exposing (main)
 
 import Browser
-import Html exposing (Html, div, footer, h1, header, input, li, p, section, text, ul)
-import Html.Attributes exposing (autofocus, class, id, placeholder)
+import Html exposing (Attribute, Html, div, h1, header, input, label, li, p, section, text, ul)
+import Html.Attributes exposing (autofocus, class, name, placeholder, type_)
+import Html.Events exposing (keyCode, on, onInput)
+import Json.Decode as Json
 
 
 
@@ -10,22 +12,27 @@ import Html.Attributes exposing (autofocus, class, id, placeholder)
 
 
 type alias Todo =
-    { content : String
+    { id : Int
+    , content : String
     , completed : Bool
     }
 
 
-type alias Todos =
-    List Todo
-
-
 type alias Model =
-    Maybe Todos
+    { todos : List Todo
+    , uid : Int
+    , textContent : String
+    }
 
 
 init : ( Model, Cmd Msg )
 init =
-    ( Nothing, Cmd.none )
+    ( { todos = []
+      , uid = 0
+      , textContent = ""
+      }
+    , Cmd.none
+    )
 
 
 
@@ -33,12 +40,40 @@ init =
 
 
 type Msg
-    = NoOp
+    = Add
+    | UpdateInputText String
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
-    ( model, Cmd.none )
+    case msg of
+        Add ->
+            ( { model
+                | todos =
+                    model.todos
+                        ++ [ { id = model.uid + 1, content = model.textContent, completed = False } ]
+                , uid = model.uid + 1
+              }
+            , Cmd.none
+            )
+
+        UpdateInputText str ->
+            ( { model | textContent = str }
+            , Cmd.none
+            )
+
+
+onEnter : Msg -> Attribute Msg
+onEnter msg =
+    let
+        isEnter code =
+            if code == 13 then
+                Json.succeed msg
+
+            else
+                Json.fail "not ENTER"
+    in
+    on "keydown" (Json.andThen isEnter keyCode)
 
 
 
@@ -48,20 +83,16 @@ update msg model =
 renderTodo : Todo -> Html Msg
 renderTodo todo =
     li []
-        [ p [] [ text todo.content ]
+        [ input [ class "toggle", type_ "checkbox" ] []
+        , label [] [ text todo.content ]
         ]
 
 
-renderTodos : Maybe Todos -> List (Html Msg)
-renderTodos maybeTodos =
-    case maybeTodos of
-        Just todos ->
-            List.map
-                renderTodo
-                todos
-
-        Nothing ->
-            [ text "" ]
+renderTodos : List Todo -> List (Html Msg)
+renderTodos todos =
+    List.map
+        renderTodo
+        todos
 
 
 view : Model -> Html Msg
@@ -70,12 +101,19 @@ view model =
         [ header []
             [ h1 []
                 [ text "todos" ]
-            , input [ class "new-todo", placeholder "What needs to be done?", autofocus True ]
+            , input
+                [ class "new-todo"
+                , placeholder "What needs to be done?"
+                , autofocus True
+                , name "newTodo"
+                , onInput UpdateInputText
+                , onEnter Add
+                ]
                 []
             ]
         , section
             [ class "main" ]
-            [ ul [] (renderTodos model) ]
+            [ ul [ class "todo-list" ] (renderTodos model.todos) ]
         ]
 
 
