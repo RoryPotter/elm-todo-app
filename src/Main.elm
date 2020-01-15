@@ -1,7 +1,7 @@
 module Main exposing (main)
 
 import Browser
-import Html exposing (Attribute, Html, div, h1, header, input, label, li, p, section, text, ul)
+import Html exposing (Attribute, Html, div, h1, header, input, label, li, section, text, ul)
 import Html.Attributes exposing (autofocus, class, name, placeholder, type_)
 import Html.Events exposing (keyCode, on, onInput)
 import Json.Decode as Json
@@ -21,7 +21,7 @@ type alias Todo =
 type alias Model =
     { todos : List Todo
     , uid : Int
-    , textContent : String
+    , inputText : String
     }
 
 
@@ -29,7 +29,7 @@ init : ( Model, Cmd Msg )
 init =
     ( { todos = []
       , uid = 0
-      , textContent = ""
+      , inputText = ""
       }
     , Cmd.none
     )
@@ -51,14 +51,14 @@ update msg model =
             ( { model
                 | todos =
                     model.todos
-                        ++ [ { id = model.uid + 1, content = model.textContent, completed = False } ]
+                        ++ [ { id = model.uid + 1, content = model.inputText, completed = False } ]
                 , uid = model.uid + 1
               }
             , Cmd.none
             )
 
         UpdateInputText str ->
-            ( { model | textContent = str }
+            ( { model | inputText = str }
             , Cmd.none
             )
 
