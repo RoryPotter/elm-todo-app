@@ -1,10 +1,13 @@
 module Main exposing (main)
 
 import Browser
-import Html exposing (Attribute, Html, div, h1, header, input, label, li, section, text, ul)
-import Html.Attributes exposing (autofocus, class, name, placeholder, type_)
-import Html.Events exposing (keyCode, on, onInput)
+import Html exposing (..)
+import Html.Attributes exposing (..)
+import Html.Events exposing (keyCode, on, onCheck, onInput)
+import Html.Events.Extra exposing (onEnter)
+import Html.Extra as Html exposing (..)
 import Json.Decode as Json
+import List.Extra exposing (..)
 
 
 
@@ -42,6 +45,7 @@ init =
 type Msg
     = Add
     | UpdateInputText String
+    | Check Int Bool
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -62,18 +66,12 @@ update msg model =
             , Cmd.none
             )
 
-
-onEnter : Msg -> Attribute Msg
-onEnter msg =
-    let
-        isEnter code =
-            if code == 13 then
-                Json.succeed msg
-
-            else
-                Json.fail "not ENTER"
-    in
-    on "keydown" (Json.andThen isEnter keyCode)
+        Check id checkboxValue ->
+            ( { model
+                | todos = updateIf (\todo -> todo.id == id) (\todo -> { todo | completed = checkboxValue }) model.todos
+              }
+            , Cmd.none
+            )
 
 
 
@@ -83,7 +81,7 @@ onEnter msg =
 renderTodo : Todo -> Html Msg
 renderTodo todo =
     li []
-        [ input [ class "toggle", type_ "checkbox" ] []
+        [ input [ class "toggle", type_ "checkbox", onCheck (Check todo.id) ] []
         , label [] [ text todo.content ]
         ]
 
