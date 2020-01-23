@@ -1,13 +1,15 @@
 module Main exposing (main)
 
 import Browser
+import Browser.Dom as Dom
 import Html exposing (..)
 import Html.Attributes exposing (..)
-import Html.Events exposing (keyCode, on, onCheck, onInput)
-import Html.Events.Extra exposing (onEnter)
+import Html.Events exposing (..)
+import Html.Events.Extra exposing (onChange, onEnter)
 import Html.Extra as Html exposing (..)
 import Json.Decode as Json
 import List.Extra exposing (..)
+import Task
 
 
 
@@ -18,6 +20,7 @@ type alias Todo =
     { id : Int
     , content : String
     , completed : Bool
+    , editing : Bool
     }
 
 
@@ -46,6 +49,8 @@ type Msg
     = Add
     | UpdateInputText String
     | Check Int Bool
+    | Editing Int
+    | Edit String
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -59,7 +64,7 @@ update msg model =
                 ( { model
                     | todos =
                         model.todos
-                            ++ [ { id = model.uid + 1, content = String.trim model.inputText, completed = False } ]
+                            ++ [ { id = model.uid + 1, content = String.trim model.inputText, completed = False, editing = False } ]
                     , uid = model.uid + 1
                     , inputText = ""
                   }
@@ -78,6 +83,20 @@ update msg model =
             , Cmd.none
             )
 
+        Editing id ->
+            ( { model
+                | todos = updateIf (\todo -> todo.id == id) (\todo -> { todo | editing = True }) model.todos
+              }
+            , Cmd.none
+            )
+
+        Edit value ->
+            ( { model
+                | todos = updateIf (\todo -> todo.editing) (\todo -> { todo | editing = False, content = value }) model.todos
+              }
+            , Cmd.none
+            )
+
 
 
 ---- VIEW ----
@@ -85,18 +104,17 @@ update msg model =
 
 renderTodo : Todo -> Html Msg
 renderTodo todo =
-    let
-        todoClasses =
-            if todo.completed then
-                [ class "completed" ]
-
-            else
-                []
-    in
     li
-        todoClasses
-        [ input [ class "toggle", type_ "checkbox", onCheck (Check todo.id) ] []
-        , label [] [ text todo.content ]
+        [ classList
+            [ ( "completed", todo.completed )
+            , ( "editing", todo.editing )
+            ]
+        ]
+        [ div [ class "view" ]
+            [ input [ class "toggle", type_ "checkbox", onCheck (Check todo.id) ] []
+            , label [ onDoubleClick (Editing todo.id) ] [ text todo.content ]
+            ]
+        , input [ class "edit", value todo.content, onChange Edit ] []
         ]
 
 
