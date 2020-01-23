@@ -85,7 +85,16 @@ update msg model =
 
 renderTodo : Todo -> Html Msg
 renderTodo todo =
-    li []
+    let
+        todoClasses =
+            if todo.completed then
+                [ class "completed" ]
+
+            else
+                []
+    in
+    li
+        todoClasses
         [ input [ class "toggle", type_ "checkbox", onCheck (Check todo.id) ] []
         , label [] [ text todo.content ]
         ]
