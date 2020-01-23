@@ -57,6 +57,7 @@ update msg model =
                     model.todos
                         ++ [ { id = model.uid + 1, content = model.inputText, completed = False } ]
                 , uid = model.uid + 1
+                , inputText = ""
               }
             , Cmd.none
             )
@@ -103,6 +104,7 @@ view model =
                 [ class "new-todo"
                 , placeholder "What needs to be done?"
                 , autofocus True
+                , value model.inputText
                 , name "newTodo"
                 , onInput UpdateInputText
                 , onEnter Add
