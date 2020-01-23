@@ -100,8 +100,12 @@ renderTodos todos =
 
 view : Model -> Html Msg
 view model =
+    let
+        isHidden =
+            List.length model.todos == 0
+    in
     div [ class "todoapp" ]
-        [ header []
+        [ header [ class "header" ]
             [ h1 []
                 [ text "todos" ]
             , input
@@ -116,8 +120,13 @@ view model =
                 []
             ]
         , section
-            [ class "main" ]
+            [ class "main", hidden isHidden ]
             [ ul [ class "todo-list" ] (renderTodos model.todos) ]
+        , footer
+            [ class "footer"
+            , hidden isHidden
+            ]
+            [ text "" ]
         ]
 
 
