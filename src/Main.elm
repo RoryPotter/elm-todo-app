@@ -52,15 +52,19 @@ update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         Add ->
-            ( { model
-                | todos =
-                    model.todos
-                        ++ [ { id = model.uid + 1, content = model.inputText, completed = False } ]
-                , uid = model.uid + 1
-                , inputText = ""
-              }
-            , Cmd.none
-            )
+            if model.inputText == "" then
+                ( model, Cmd.none )
+
+            else
+                ( { model
+                    | todos =
+                        model.todos
+                            ++ [ { id = model.uid + 1, content = String.trim model.inputText, completed = False } ]
+                    , uid = model.uid + 1
+                    , inputText = ""
+                  }
+                , Cmd.none
+                )
 
         UpdateInputText str ->
             ( { model | inputText = str }
