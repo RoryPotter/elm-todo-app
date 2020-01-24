@@ -28,6 +28,7 @@ type alias Model =
     { todos : List Todo
     , uid : Int
     , inputText : String
+    , editingText : String
     }
 
 
@@ -36,6 +37,7 @@ init =
     ( { todos = []
       , uid = 0
       , inputText = ""
+      , editingText = ""
       }
     , Cmd.none
     )
@@ -50,8 +52,10 @@ type Msg
     | Add
     | UpdateInputText String
     | Check Int Bool
-    | EditingTodo Int Bool
+    | StartEditingTodo Int
     | UpdateTodo Int String
+    | StopEditingTodo Int
+    | DiscardTodoUpdate Int
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -87,9 +91,16 @@ update msg model =
             , Cmd.none
             )
 
-        EditingTodo id isEditing ->
+        StartEditingTodo id ->
             ( { model
-                | todos = updateIf (\todo -> todo.id == id) (\todo -> { todo | editing = isEditing }) model.todos
+                | todos = updateIf (\todo -> todo.id == id) (\todo -> { todo | editing = True }) model.todos
+                , editingText =
+                    case find (\todo -> todo.id == id) model.todos of
+                        Just todo ->
+                            todo.content
+
+                        Nothing ->
+                            ""
               }
             , Task.attempt (\_ -> NoOp) (Dom.focus ("todo-" ++ String.fromInt id))
             )
@@ -100,6 +111,54 @@ update msg model =
               }
             , Cmd.none
             )
+
+        StopEditingTodo id ->
+            let
+                todoContent =
+                    case find (\todo -> todo.id == id) model.todos of
+                        Just todo ->
+                            todo.content
+
+                        Nothing ->
+                            ""
+
+                isTodoEmpty =
+                    todoContent == ""
+            in
+            if isTodoEmpty then
+                ( { model | todos = remove model.todos id }, Cmd.none )
+
+            else
+                ( { model
+                    | todos = updateIf (\todo -> todo.id == id) (\todo -> { todo | editing = False }) model.todos
+                  }
+                , Cmd.none
+                )
+
+        DiscardTodoUpdate id ->
+            ( { model
+                | todos = updateIf (\todo -> todo.id == id) (\todo -> { todo | content = model.editingText, editing = False }) model.todos
+              }
+            , Cmd.none
+            )
+
+
+remove : List Todo -> Int -> List Todo
+remove todos id =
+    List.filter (\todo -> todo.id /= id) todos
+
+
+onEsc : Msg -> Attribute Msg
+onEsc msg =
+    let
+        isEsc code =
+            if code == 27 then
+                Json.succeed msg
+
+            else
+                Json.fail "not ESC"
+    in
+    on "keydown" (Json.andThen isEsc keyCode)
 
 
 
@@ -116,7 +175,7 @@ renderTodo todo =
         ]
         [ div [ class "view" ]
             [ input [ class "toggle", type_ "checkbox", onCheck (Check todo.id) ] []
-            , label [ onDoubleClick (EditingTodo todo.id True) ] [ text todo.content ]
+            , label [ onDoubleClick (StartEditingTodo todo.id) ] [ text todo.content ]
             ]
         , input
             [ class "edit"
@@ -124,8 +183,9 @@ renderTodo todo =
             , value todo.content
             , id ("todo-" ++ String.fromInt todo.id)
             , onInput (UpdateTodo todo.id)
-            , onBlur (EditingTodo todo.id False)
-            , onEnter (EditingTodo todo.id False)
+            , onBlur (StopEditingTodo todo.id)
+            , onEnter (StopEditingTodo todo.id)
+            , onEsc (DiscardTodoUpdate todo.id)
             ]
             []
         ]
