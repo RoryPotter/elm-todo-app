@@ -32,13 +32,27 @@ type alias Model =
     }
 
 
+newTodo : Int -> String -> Todo
+newTodo id text =
+    { id = id
+    , content = String.trim text
+    , completed = False
+    , editing = False
+    }
+
+
+emptyModel : Model
+emptyModel =
+    { todos = []
+    , uid = 0
+    , inputText = ""
+    , editingText = ""
+    }
+
+
 init : ( Model, Cmd Msg )
 init =
-    ( { todos = []
-      , uid = 0
-      , inputText = ""
-      , editingText = ""
-      }
+    ( emptyModel
     , Cmd.none
     )
 
@@ -73,7 +87,7 @@ update msg model =
                 ( { model
                     | todos =
                         model.todos
-                            ++ [ { id = model.uid + 1, content = String.trim model.inputText, completed = False, editing = False } ]
+                            ++ [ newTodo model.uid model.inputText ]
                     , uid = model.uid + 1
                     , inputText = ""
                   }
@@ -182,7 +196,7 @@ renderTodo todo =
         [ div [ class "view" ]
             [ input [ class "toggle", type_ "checkbox", onCheck (Check todo.id) ] []
             , label [ onDoubleClick (StartEditingTodo todo.id) ] [ text todo.content ]
-            , button [ type_ "button", class "destroy", onClick (Delete todo.id) ] []
+            , button [ class "destroy", type_ "button", onClick (Delete todo.id) ] []
             ]
         , input
             [ class "edit"
@@ -198,20 +212,29 @@ renderTodo todo =
         ]
 
 
-renderTodos : List Todo -> List (Html Msg)
-renderTodos todos =
-    List.map
-        renderTodo
-        todos
+todoCountView : Int -> Html Msg
+todoCountView numberOfTodos =
+    let
+        item_pluralize =
+            if numberOfTodos == 1 then
+                " item"
+
+            else
+                " items"
+    in
+    span
+        [ class "todo-count" ]
+        [ strong [] [ text (String.fromInt numberOfTodos) ]
+        , text (item_pluralize ++ " left")
+        ]
 
 
-numberTodosView : Int -> String
-numberTodosView n =
-    if n > 1 then
-        " items left"
-
-    else
-        " item left"
+visibilityFilter : String -> String -> Html Msg
+visibilityFilter url name =
+    li []
+        [ a [ class "", href url ] [ text name ]
+        , text " "
+        ]
 
 
 view : Model -> Html Msg
@@ -240,28 +263,16 @@ view model =
             ]
         , section
             [ class "main", hidden isHidden ]
-            [ ul [ class "todo-list" ] (renderTodos model.todos) ]
+            [ ul [ class "todo-list" ] (List.map renderTodo model.todos) ]
         , footer
             [ class "footer"
             , hidden isHidden
             ]
-            [ span [ class "todo-count" ]
-                [ strong [] [ text (String.fromInt numberOfTodos) ]
-                , text (numberTodosView numberOfTodos)
-                ]
+            [ todoCountView numberOfTodos
             , ul [ class "filters" ]
-                [ li []
-                    [ a [ class "", href "#/" ] [ text "All" ]
-                    , text " "
-                    ]
-                , li []
-                    [ a [ class "", href "#/active" ] [ text "Active" ]
-                    , text " "
-                    ]
-                , li []
-                    [ a [ class "", href "#/completed" ] [ text "Completed" ]
-                    , text " "
-                    ]
+                [ visibilityFilter "#/" "All"
+                , visibilityFilter "#/active" "Active"
+                , visibilityFilter "#/completed" "Completed"
                 ]
             ]
         ]
