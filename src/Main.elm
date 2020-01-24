@@ -200,14 +200,11 @@ renderTodos todos =
 
 numberTodosView : Int -> String
 numberTodosView n =
-    if n == 1 then
-        " item left"
-
-    else if n > 1 then
+    if n > 1 then
         " items left"
 
     else
-        ""
+        " item left"
 
 
 view : Model -> Html Msg
@@ -244,6 +241,20 @@ view model =
             [ span [ class "todo-count" ]
                 [ strong [] [ text (String.fromInt numberOfTodos) ]
                 , text (numberTodosView numberOfTodos)
+                ]
+            , ul [ class "filters" ]
+                [ li []
+                    [ a [ class "", href "#/" ] [ text "All" ]
+                    , text " "
+                    ]
+                , li []
+                    [ a [ class "", href "#/active" ] [ text "Active" ]
+                    , text " "
+                    ]
+                , li []
+                    [ a [ class "", href "#/completed" ] [ text "Completed" ]
+                    , text " "
+                    ]
                 ]
             ]
         ]
