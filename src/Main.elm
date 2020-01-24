@@ -5,7 +5,7 @@ import Browser.Dom as Dom
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
-import Html.Events.Extra exposing (onChange, onEnter)
+import Html.Events.Extra exposing (onEnter)
 import Html.Extra as Html exposing (..)
 import Json.Decode as Json
 import List.Extra exposing (..)
@@ -46,16 +46,20 @@ init =
 
 
 type Msg
-    = Add
+    = NoOp
+    | Add
     | UpdateInputText String
     | Check Int Bool
-    | Editing Int
-    | Edit String
+    | EditingTodo Int Bool
+    | UpdateTodo Int String
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
+        NoOp ->
+            ( model, Cmd.none )
+
         Add ->
             if model.inputText == "" then
                 ( model, Cmd.none )
@@ -83,16 +87,16 @@ update msg model =
             , Cmd.none
             )
 
-        Editing id ->
+        EditingTodo id isEditing ->
             ( { model
-                | todos = updateIf (\todo -> todo.id == id) (\todo -> { todo | editing = True }) model.todos
+                | todos = updateIf (\todo -> todo.id == id) (\todo -> { todo | editing = isEditing }) model.todos
               }
-            , Cmd.none
+            , Task.attempt (\_ -> NoOp) (Dom.focus ("todo-" ++ String.fromInt id))
             )
 
-        Edit value ->
+        UpdateTodo id value ->
             ( { model
-                | todos = updateIf (\todo -> todo.editing) (\todo -> { todo | editing = False, content = value }) model.todos
+                | todos = updateIf (\todo -> todo.id == id) (\todo -> { todo | content = String.trim value }) model.todos
               }
             , Cmd.none
             )
@@ -112,9 +116,18 @@ renderTodo todo =
         ]
         [ div [ class "view" ]
             [ input [ class "toggle", type_ "checkbox", onCheck (Check todo.id) ] []
-            , label [ onDoubleClick (Editing todo.id) ] [ text todo.content ]
+            , label [ onDoubleClick (EditingTodo todo.id True) ] [ text todo.content ]
             ]
-        , input [ class "edit", value todo.content, onChange Edit ] []
+        , input
+            [ class "edit"
+            , name "content"
+            , value todo.content
+            , id ("todo-" ++ String.fromInt todo.id)
+            , onInput (UpdateTodo todo.id)
+            , onBlur (EditingTodo todo.id False)
+            , onEnter (EditingTodo todo.id False)
+            ]
+            []
         ]
 
 
