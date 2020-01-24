@@ -8,7 +8,7 @@ import Html.Events exposing (..)
 import Html.Events.Extra exposing (onEnter)
 import Html.Extra as Html exposing (..)
 import Json.Decode as Json
-import List.Extra exposing (..)
+import List.Extra exposing (find, updateIf)
 import Task
 
 
@@ -198,11 +198,26 @@ renderTodos todos =
         todos
 
 
+numberTodosView : Int -> String
+numberTodosView n =
+    if n == 1 then
+        " item left"
+
+    else if n > 1 then
+        " items left"
+
+    else
+        ""
+
+
 view : Model -> Html Msg
 view model =
     let
         isHidden =
             List.length model.todos == 0
+
+        numberOfTodos =
+            List.length model.todos
     in
     div [ class "todoapp" ]
         [ header [ class "header" ]
@@ -226,7 +241,11 @@ view model =
             [ class "footer"
             , hidden isHidden
             ]
-            [ text "" ]
+            [ span [ class "todo-count" ]
+                [ strong [] [ text (String.fromInt numberOfTodos) ]
+                , text (numberTodosView numberOfTodos)
+                ]
+            ]
         ]
 
 
