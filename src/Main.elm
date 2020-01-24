@@ -56,6 +56,7 @@ type Msg
     | UpdateTodo Int String
     | StopEditingTodo Int
     | DiscardTodoUpdate Int
+    | Delete Int
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -142,6 +143,11 @@ update msg model =
             , Cmd.none
             )
 
+        Delete id ->
+            ( { model | todos = remove model.todos id }
+            , Cmd.none
+            )
+
 
 remove : List Todo -> Int -> List Todo
 remove todos id =
@@ -176,6 +182,7 @@ renderTodo todo =
         [ div [ class "view" ]
             [ input [ class "toggle", type_ "checkbox", onCheck (Check todo.id) ] []
             , label [ onDoubleClick (StartEditingTodo todo.id) ] [ text todo.content ]
+            , button [ type_ "button", class "destroy", onClick (Delete todo.id) ] []
             ]
         , input
             [ class "edit"
