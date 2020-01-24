@@ -50,13 +50,6 @@ emptyModel =
     }
 
 
-init : ( Model, Cmd Msg )
-init =
-    ( emptyModel
-    , Cmd.none
-    )
-
-
 
 ---- UPDATE ----
 
@@ -284,9 +277,13 @@ view model =
 
 main : Program () Model Msg
 main =
-    Browser.element
-        { view = view
-        , init = \_ -> init
+    Browser.document
+        { init =
+            \_ ->
+                ( emptyModel
+                , Cmd.none
+                )
+        , view = \model -> { title = "Elm • TodoMVC", body = [ view model ] }
         , update = update
         , subscriptions = always Sub.none
         }

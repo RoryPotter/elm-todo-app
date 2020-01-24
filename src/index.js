@@ -1,5 +1,3 @@
 import { Elm } from "./Main.elm";
 
-Elm.Main.init({
-  node: document.querySelector("#app")
-});
+export var app = Elm.Main.init();
