@@ -14,6 +14,8 @@ import Task
 
 
 ---- MODEL ----
+escKey: Int
+escKey = 27
 
 
 type alias Todo =
@@ -64,6 +66,7 @@ type Msg
     | StopEditingTodo Int
     | DiscardTodoUpdate Int
     | Delete Int
+    | ToggleAll Bool
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -154,6 +157,14 @@ update msg model =
             ( { model | todos = remove model.todos id }
             , Cmd.none
             )
+        
+        ToggleAll allCompleted->
+            (
+                {
+                    model | todos = List.map (\todo -> {todo | completed = allCompleted}) model.todos
+                }
+                ,Cmd.none
+            )
 
 
 remove : List Todo -> Int -> List Todo
@@ -165,7 +176,7 @@ onEsc : Msg -> Attribute Msg
 onEsc msg =
     let
         isEsc code =
-            if code == 27 then
+            if code == escKey then
                 Json.succeed msg
 
             else
@@ -180,6 +191,8 @@ onEsc msg =
 
 renderTodo : Todo -> Html Msg
 renderTodo todo =
+
+    
     li
         [ classList
             [ ( "completed", todo.completed )
@@ -187,7 +200,7 @@ renderTodo todo =
             ]
         ]
         [ div [ class "view" ]
-            [ input [ class "toggle", type_ "checkbox", onCheck (Check todo.id) ] []
+            [ input [ class "toggle", type_ "checkbox", checked todo.completed, onCheck (Check todo.id) ] []
             , label [ onDoubleClick (StartEditingTodo todo.id) ] [ text todo.content ]
             , button [ class "destroy", type_ "button", onClick (Delete todo.id) ] []
             ]
@@ -256,7 +269,9 @@ view model =
             ]
         , section
             [ class "main", hidden isHidden ]
-            [ ul [ class "todo-list" ] (List.map renderTodo model.todos) ]
+            [ input [class "toggle-all", id "toggle-all", type_ "checkbox", onCheck ToggleAll] []
+            , label [for "toggle-all"] [text "Mark all as complete"]
+            ,ul [ class "todo-list" ] (List.map renderTodo model.todos) ]
         , footer
             [ class "footer"
             , hidden isHidden
