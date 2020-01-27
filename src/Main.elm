@@ -67,6 +67,7 @@ type Msg
     | DiscardTodoUpdate Int
     | Delete Int
     | ToggleAll Bool
+    | ClearCompleted
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -165,6 +166,14 @@ update msg model =
                 }
                 ,Cmd.none
             )
+        
+        ClearCompleted ->
+            (
+                {
+                    model | 
+                    todos = List.filter (\todo -> not todo.completed) model.todos
+                }, Cmd.none
+            )
 
 
 remove : List Todo -> Int -> List Todo
@@ -249,8 +258,19 @@ view model =
         isHidden =
             List.length model.todos == 0
 
+
         numberOfTodos =
             List.length model.todos
+        
+        numberOfCompletedTodos =
+            List.length (List.filter (\todo -> todo.completed) model.todos)
+
+        numberOfTodosLeft =
+            numberOfTodos - numberOfCompletedTodos
+
+        clearCompletedTodos =
+            not(numberOfCompletedTodos > 0)
+
     in
     div [ class "todoapp" ]
         [ header [ class "header" ]
@@ -276,12 +296,18 @@ view model =
             [ class "footer"
             , hidden isHidden
             ]
-            [ todoCountView numberOfTodos
+            [ todoCountView numberOfTodosLeft
             , ul [ class "filters" ]
                 [ visibilityFilter "#/" "All"
                 , visibilityFilter "#/active" "Active"
                 , visibilityFilter "#/completed" "Completed"
                 ]
+            , button [
+                class "clear-completed"
+                , type_ "button"
+                , hidden (clearCompletedTodos)
+                , onClick ClearCompleted 
+                ] [text "Clear completed"]
             ]
         ]
 
