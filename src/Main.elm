@@ -257,61 +257,68 @@ view model =
     let
         isHidden =
             List.length model.todos == 0
-
-
-        numberOfTodos =
-            List.length model.todos
-        
-        numberOfCompletedTodos =
-            List.length (List.filter (\todo -> todo.completed) model.todos)
-
-        numberOfTodosLeft =
-            numberOfTodos - numberOfCompletedTodos
-
-        clearCompletedTodos =
-            not(numberOfCompletedTodos > 0)
-
     in
+
     div [ class "todoapp" ]
-        [ header [ class "header" ]
+        [ viewHeader model.inputText
+        , viewTodos model.todos isHidden
+        , viewFooter model.todos isHidden
+        ]
+
+viewHeader: String -> Html Msg
+viewHeader inputText =
+        header [ class "header" ]
             [ h1 []
                 [ text "todos" ]
             , input
                 [ class "new-todo"
                 , placeholder "What needs to be done?"
                 , autofocus True
-                , value model.inputText
+                , value inputText
                 , name "newTodo"
                 , onInput UpdateInputText
                 , onEnter Add
                 ]
                 []
-            ]
-        , section
-            [ class "main", hidden isHidden ]
-            [ input [class "toggle-all", id "toggle-all", type_ "checkbox", onCheck ToggleAll] []
-            , label [for "toggle-all"] [text "Mark all as complete"]
-            ,ul [ class "todo-list" ] (List.map renderTodo model.todos) ]
-        , footer
-            [ class "footer"
-            , hidden isHidden
-            ]
-            [ todoCountView numberOfTodosLeft
-            , ul [ class "filters" ]
-                [ visibilityFilter "#/" "All"
-                , visibilityFilter "#/active" "Active"
-                , visibilityFilter "#/completed" "Completed"
-                ]
-            , button [
-                class "clear-completed"
-                , type_ "button"
-                , hidden (clearCompletedTodos)
-                , onClick ClearCompleted 
-                ] [text "Clear completed"]
-            ]
+            ] 
+
+viewTodos: List Todo -> Bool -> Html Msg
+viewTodos todos isHidden =
+    section
+        [ class "main", hidden isHidden ]
+        [ input [class "toggle-all", id "toggle-all", type_ "checkbox", onCheck ToggleAll] []
+        , label [for "toggle-all"] [text "Mark all as complete"]
+        , ul [ class "todo-list" ] (List.map renderTodo todos) ]
+
+viewFooter: List Todo -> Bool -> Html Msg
+viewFooter todos isHidden = 
+    let
+        numberOfCompletedTodos =
+            List.length (List.filter (\todo -> todo.completed) todos)
+
+        numberOfTodosLeft =
+            List.length todos - numberOfCompletedTodos
+
+        clearCompletedTodos =
+            not(numberOfCompletedTodos > 0)
+    in
+    footer
+        [ class "footer"
+        , hidden isHidden
         ]
-
-
+        [ todoCountView numberOfTodosLeft
+        , ul [ class "filters" ]
+            [ visibilityFilter "#/" "All"
+            , visibilityFilter "#/active" "Active"
+            , visibilityFilter "#/completed" "Completed"
+            ]
+        , button [
+            class "clear-completed"
+            , type_ "button"
+            , hidden clearCompletedTodos
+            , onClick ClearCompleted 
+            ] [text "Clear completed"]
+        ]
 
 ---- PROGRAM ----
 
