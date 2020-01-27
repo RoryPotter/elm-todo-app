@@ -14,8 +14,11 @@ import Task
 
 
 ---- MODEL ----
-escKey: Int
-escKey = 27
+
+
+escKey : Int
+escKey =
+    27
 
 
 type alias Todo =
@@ -158,21 +161,19 @@ update msg model =
             ( { model | todos = remove model.todos id }
             , Cmd.none
             )
-        
-        ToggleAll allCompleted->
-            (
-                {
-                    model | todos = List.map (\todo -> {todo | completed = allCompleted}) model.todos
-                }
-                ,Cmd.none
+
+        ToggleAll allCompleted ->
+            ( { model
+                | todos = List.map (\todo -> { todo | completed = allCompleted }) model.todos
+              }
+            , Cmd.none
             )
-        
+
         ClearCompleted ->
-            (
-                {
-                    model | 
-                    todos = List.filter (\todo -> not todo.completed) model.todos
-                }, Cmd.none
+            ( { model
+                | todos = List.filter (\todo -> not todo.completed) model.todos
+              }
+            , Cmd.none
             )
 
 
@@ -200,8 +201,6 @@ onEsc msg =
 
 renderTodo : Todo -> Html Msg
 renderTodo todo =
-
-    
     li
         [ classList
             [ ( "completed", todo.completed )
@@ -258,40 +257,43 @@ view model =
         isHidden =
             List.length model.todos == 0
     in
-
     div [ class "todoapp" ]
         [ viewHeader model.inputText
         , viewTodos model.todos isHidden
         , viewFooter model.todos isHidden
         ]
 
-viewHeader: String -> Html Msg
-viewHeader inputText =
-        header [ class "header" ]
-            [ h1 []
-                [ text "todos" ]
-            , input
-                [ class "new-todo"
-                , placeholder "What needs to be done?"
-                , autofocus True
-                , value inputText
-                , name "newTodo"
-                , onInput UpdateInputText
-                , onEnter Add
-                ]
-                []
-            ] 
 
-viewTodos: List Todo -> Bool -> Html Msg
+viewHeader : String -> Html Msg
+viewHeader inputText =
+    header [ class "header" ]
+        [ h1 []
+            [ text "todos" ]
+        , input
+            [ class "new-todo"
+            , placeholder "What needs to be done?"
+            , autofocus True
+            , value inputText
+            , name "newTodo"
+            , onInput UpdateInputText
+            , onEnter Add
+            ]
+            []
+        ]
+
+
+viewTodos : List Todo -> Bool -> Html Msg
 viewTodos todos isHidden =
     section
         [ class "main", hidden isHidden ]
-        [ input [class "toggle-all", id "toggle-all", type_ "checkbox", onCheck ToggleAll] []
-        , label [for "toggle-all"] [text "Mark all as complete"]
-        , ul [ class "todo-list" ] (List.map renderTodo todos) ]
+        [ input [ class "toggle-all", id "toggle-all", type_ "checkbox", onCheck ToggleAll ] []
+        , label [ for "toggle-all" ] [ text "Mark all as complete" ]
+        , ul [ class "todo-list" ] (List.map renderTodo todos)
+        ]
 
-viewFooter: List Todo -> Bool -> Html Msg
-viewFooter todos isHidden = 
+
+viewFooter : List Todo -> Bool -> Html Msg
+viewFooter todos isHidden =
     let
         numberOfCompletedTodos =
             List.length (List.filter (\todo -> todo.completed) todos)
@@ -300,7 +302,7 @@ viewFooter todos isHidden =
             List.length todos - numberOfCompletedTodos
 
         clearCompletedTodos =
-            not(numberOfCompletedTodos > 0)
+            not (numberOfCompletedTodos > 0)
     in
     footer
         [ class "footer"
@@ -312,13 +314,16 @@ viewFooter todos isHidden =
             , visibilityFilter "#/active" "Active"
             , visibilityFilter "#/completed" "Completed"
             ]
-        , button [
-            class "clear-completed"
+        , button
+            [ class "clear-completed"
             , type_ "button"
             , hidden clearCompletedTodos
-            , onClick ClearCompleted 
-            ] [text "Clear completed"]
+            , onClick ClearCompleted
+            ]
+            [ text "Clear completed" ]
         ]
+
+
 
 ---- PROGRAM ----
 
