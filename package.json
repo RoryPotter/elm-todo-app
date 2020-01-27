@@ -1,9 +1,9 @@
 {
-  "name": "elm-todo",
+  "name": "elm-todo-app",
   "version": "1.0.0",
-  "description": "Todo App made in Elm.",
+  "description": "Todo App made in Elm following the TodoMVC Spec.",
   "main": "index.js",
-  "author": "Rory Potter <rory.d.potter@gmail.com>",
+  "author": "Rory Potter",
   "license": "MIT",
   "devDependencies": {
     "elm": "^0.19.1-3",
