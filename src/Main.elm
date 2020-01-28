@@ -34,7 +34,14 @@ type alias Model =
     , uid : Int
     , inputText : String
     , editingText : String
+    , visibility : Visibility
     }
+
+
+type Visibility
+    = All
+    | Active
+    | Completed
 
 
 newTodo : Int -> String -> Todo
@@ -52,6 +59,7 @@ emptyModel =
     , uid = 0
     , inputText = ""
     , editingText = ""
+    , visibility = All
     }
 
 
@@ -71,6 +79,7 @@ type Msg
     | Delete Int
     | ToggleAll Bool
     | ClearCompleted
+    | ChangeVisibility Visibility
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -176,6 +185,11 @@ update msg model =
             , Cmd.none
             )
 
+        ChangeVisibility visibility ->
+            ( { model | visibility = visibility }
+            , Cmd.none
+            )
+
 
 remove : List Todo -> Int -> List Todo
 remove todos id =
@@ -243,10 +257,10 @@ todoCountView numberOfTodos =
         ]
 
 
-visibilityFilter : String -> String -> Html Msg
-visibilityFilter url name =
+visibilityFilter : String -> String -> Visibility -> Html Msg
+visibilityFilter url name visibility =
     li []
-        [ a [ class "", href url ] [ text name ]
+        [ a [ class "", href url, onClick (ChangeVisibility visibility) ] [ text name ]
         , text " "
         ]
 
@@ -256,10 +270,21 @@ view model =
     let
         isHidden =
             List.length model.todos == 0
+
+        visableTodos =
+            case model.visibility of
+                All ->
+                    model.todos
+
+                Active ->
+                    List.filter (\todo -> not todo.completed) model.todos
+
+                Completed ->
+                    List.filter (\todo -> todo.completed) model.todos
     in
     div [ class "todoapp" ]
         [ viewHeader model.inputText
-        , viewTodos model.todos isHidden
+        , viewTodos visableTodos isHidden
         , viewFooter model.todos isHidden
         ]
 
@@ -310,9 +335,9 @@ viewFooter todos isHidden =
         ]
         [ todoCountView numberOfTodosLeft
         , ul [ class "filters" ]
-            [ visibilityFilter "#/" "All"
-            , visibilityFilter "#/active" "Active"
-            , visibilityFilter "#/completed" "Completed"
+            [ visibilityFilter "#/" "All" All
+            , visibilityFilter "#/active" "Active" Active
+            , visibilityFilter "#/completed" "Completed" Completed
             ]
         , button
             [ class "clear-completed"
