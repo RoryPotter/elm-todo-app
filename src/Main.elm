@@ -257,8 +257,8 @@ todoCountView numberOfTodos =
         ]
 
 
-visibilityFilter : String -> String -> Visibility -> Html Msg
-visibilityFilter url name visibility =
+viewVisibilityFilter : String -> String -> Visibility -> Html Msg
+viewVisibilityFilter url name visibility =
     li []
         [ a [ class "", href url, onClick (ChangeVisibility visibility) ] [ text name ]
         , text " "
@@ -335,9 +335,9 @@ viewFooter todos isHidden =
         ]
         [ todoCountView numberOfTodosLeft
         , ul [ class "filters" ]
-            [ visibilityFilter "#/" "All" All
-            , visibilityFilter "#/active" "Active" Active
-            , visibilityFilter "#/completed" "Completed" Completed
+            [ viewVisibilityFilter "#/" "All" All
+            , viewVisibilityFilter "#/active" "Active" Active
+            , viewVisibilityFilter "#/completed" "Completed" Completed
             ]
         , button
             [ class "clear-completed"
