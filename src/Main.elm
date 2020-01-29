@@ -7,9 +7,78 @@ import Html.Attributes exposing (..)
 import Html.Events exposing (..)
 import Html.Events.Extra exposing (onEnter)
 import Html.Extra as Html exposing (..)
-import Json.Decode as Json
+import Json.Decode exposing (Decoder, bool, field, int, list, string)
+import Json.Decode.Pipeline as JsonPipeline
 import List.Extra exposing (find, updateIf)
 import Task
+
+
+
+---- PROGRAM ----
+
+
+main : Program Flags Model Msg
+main =
+    Browser.document
+        { init = init
+        , view = \model -> { title = "Elm • TodoMVC", body = [ view model ] }
+        , update = update
+        , subscriptions = always Sub.none
+        }
+
+
+type alias Flags =
+    { model : Json.Decode.Value
+    }
+
+
+init : Flags -> ( Model, Cmd Msg )
+init flags =
+    case Json.Decode.decodeValue modelDecorder flags.model of
+        Ok model ->
+            ( model, Cmd.none )
+
+        Err _ ->
+            ( emptyModel, Cmd.none )
+
+
+modelDecorder : Decoder Model
+modelDecorder =
+    Json.Decode.succeed Model
+        |> JsonPipeline.required "todos" (Json.Decode.list todoDecoder)
+        |> JsonPipeline.required "uid" int
+        |> JsonPipeline.required "inputText" string
+        |> JsonPipeline.required "editingText" string
+        |> JsonPipeline.required "visibility" visibiltyDecoder
+
+
+todoDecoder : Decoder Todo
+todoDecoder =
+    Json.Decode.succeed Todo
+        |> JsonPipeline.required "id" int
+        |> JsonPipeline.required "content" string
+        |> JsonPipeline.required "completed" bool
+        |> JsonPipeline.required "editing" bool
+
+
+visibiltyDecoder : Decoder Visibility
+visibiltyDecoder =
+    Json.Decode.string
+        |> Json.Decode.andThen
+            (\str ->
+                case str of
+                    "All" ->
+                        Json.Decode.succeed All
+
+                    "Active" ->
+                        Json.Decode.succeed Active
+
+                    "Completed" ->
+                        Json.Decode.succeed Completed
+
+                    other ->
+                        Json.Decode.fail <| "Unknown visibility: " ++ other
+            )
 
 
 
@@ -201,12 +270,12 @@ onEsc msg =
     let
         isEsc code =
             if code == escKey then
-                Json.succeed msg
+                Json.Decode.succeed msg
 
             else
-                Json.fail "not ESC"
+                Json.Decode.fail "not ESC"
     in
-    on "keydown" (Json.andThen isEsc keyCode)
+    on "keydown" (Json.Decode.andThen isEsc keyCode)
 
 
 
@@ -347,21 +416,3 @@ viewFooter todos isHidden =
             ]
             [ text "Clear completed" ]
         ]
-
-
-
----- PROGRAM ----
-
-
-main : Program () Model Msg
-main =
-    Browser.document
-        { init =
-            \_ ->
-                ( emptyModel
-                , Cmd.none
-                )
-        , view = \model -> { title = "Elm • TodoMVC", body = [ view model ] }
-        , update = update
-        , subscriptions = always Sub.none
-        }
