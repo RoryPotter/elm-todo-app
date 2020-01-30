@@ -28,17 +28,21 @@ main =
 
 
 type alias Flags =
-    { model : Json.Decode.Value
-    }
+    Maybe Json.Decode.Value
 
 
 init : Flags -> ( Model, Cmd Msg )
-init flags =
-    case Json.Decode.decodeValue modelDecorder flags.model of
-        Ok model ->
-            ( model, Cmd.none )
+init maybeModelToDecode =
+    case maybeModelToDecode of
+        Just modelToDecode ->
+            case Json.Decode.decodeValue modelDecorder modelToDecode of
+                Ok model ->
+                    ( model, Cmd.none )
 
-        Err _ ->
+                Err _ ->
+                    ( emptyModel, Cmd.none )
+
+        Nothing ->
             ( emptyModel, Cmd.none )
 
 
