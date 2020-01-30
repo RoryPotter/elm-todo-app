@@ -1,4 +1,4 @@
-module Main exposing (main)
+port module Main exposing (main)
 
 import Browser
 import Browser.Dom as Dom
@@ -7,8 +7,9 @@ import Html.Attributes exposing (..)
 import Html.Events exposing (..)
 import Html.Events.Extra exposing (onEnter)
 import Html.Extra as Html exposing (..)
-import Json.Decode exposing (Decoder, bool, field, int, list, string)
+import Json.Decode exposing (Decoder, bool, int, list, string)
 import Json.Decode.Pipeline as JsonPipeline
+import Json.Encode
 import List.Extra exposing (find, updateIf)
 import Task
 
@@ -22,9 +23,13 @@ main =
     Browser.document
         { init = init
         , view = \model -> { title = "Elm • TodoMVC", body = [ view model ] }
-        , update = update
+        , update = updateWithStorage
         , subscriptions = always Sub.none
         }
+
+
+
+---- Init and Decoding the Model ----
 
 
 type alias Flags =
@@ -86,12 +91,59 @@ visibiltyDecoder =
 
 
 
+---- Saving to Local Storage using Ports and Encoding the Model----
+
+
+port setStorage : Json.Encode.Value -> Cmd msg
+
+
+updateWithStorage : Msg -> Model -> ( Model, Cmd Msg )
+updateWithStorage msg model =
+    let
+        ( newModel, cmds ) =
+            update msg model
+    in
+    ( newModel
+    , Cmd.batch [ setStorage (modelEncoder newModel), cmds ]
+    )
+
+
+modelEncoder : Model -> Json.Encode.Value
+modelEncoder model =
+    Json.Encode.object
+        [ ( "todos", Json.Encode.list todoEncoder model.todos )
+        , ( "uid", Json.Encode.int model.uid )
+        , ( "inputText", Json.Encode.string model.inputText )
+        , ( "editingText", Json.Encode.string model.editingText )
+        , ( "visibility", visibilityEncoder model.visibility )
+        ]
+
+
+todoEncoder : Todo -> Json.Encode.Value
+todoEncoder todo =
+    Json.Encode.object
+        [ ( "id", Json.Encode.int todo.id )
+        , ( "content", Json.Encode.string todo.content )
+        , ( "completed", Json.Encode.bool todo.completed )
+        , ( "editing", Json.Encode.bool todo.editing )
+        ]
+
+
+visibilityEncoder : Visibility -> Json.Encode.Value
+visibilityEncoder visibility =
+    case visibility of
+        All ->
+            Json.Encode.string "All"
+
+        Active ->
+            Json.Encode.string "ACtive"
+
+        Completed ->
+            Json.Encode.string "Completed"
+
+
+
 ---- MODEL ----
-
-
-escKey : Int
-escKey =
-    27
 
 
 type alias Todo =
@@ -272,6 +324,9 @@ remove todos id =
 onEsc : Msg -> Attribute Msg
 onEsc msg =
     let
+        escKey =
+            27
+
         isEsc code =
             if code == escKey then
                 Json.Decode.succeed msg
