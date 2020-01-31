@@ -7,9 +7,9 @@ import Html.Attributes exposing (..)
 import Html.Events exposing (..)
 import Html.Events.Extra exposing (onEnter)
 import Html.Extra as Html exposing (..)
-import Json.Decode exposing (Decoder, bool, int, list, string)
-import Json.Decode.Pipeline as JsonPipeline
-import Json.Encode
+import Json.Decode as Decode exposing (Decoder, bool, int, list, string)
+import Json.Decode.Pipeline as Pipeline
+import Json.Encode as Encode
 import List.Extra exposing (find, updateIf)
 import Task
 
@@ -33,14 +33,14 @@ main =
 
 
 type alias Flags =
-    Maybe Json.Decode.Value
+    Maybe String
 
 
 init : Flags -> ( Model, Cmd Msg )
 init maybeModelToDecode =
     case maybeModelToDecode of
         Just modelToDecode ->
-            case Json.Decode.decodeValue modelDecorder modelToDecode of
+            case Decode.decodeString modelDecorder modelToDecode of
                 Ok model ->
                     ( model, Cmd.none )
 
@@ -53,40 +53,40 @@ init maybeModelToDecode =
 
 modelDecorder : Decoder Model
 modelDecorder =
-    Json.Decode.succeed Model
-        |> JsonPipeline.required "todos" (Json.Decode.list todoDecoder)
-        |> JsonPipeline.required "uid" int
-        |> JsonPipeline.required "inputText" string
-        |> JsonPipeline.required "editingText" string
-        |> JsonPipeline.required "visibility" visibiltyDecoder
+    Decode.succeed Model
+        |> Pipeline.required "todos" (Decode.list todoDecoder)
+        |> Pipeline.required "uid" int
+        |> Pipeline.required "inputText" string
+        |> Pipeline.required "editingText" string
+        |> Pipeline.required "visibility" visibiltyDecoder
 
 
 todoDecoder : Decoder Todo
 todoDecoder =
-    Json.Decode.succeed Todo
-        |> JsonPipeline.required "id" int
-        |> JsonPipeline.required "content" string
-        |> JsonPipeline.required "completed" bool
-        |> JsonPipeline.required "editing" bool
+    Decode.succeed Todo
+        |> Pipeline.required "id" int
+        |> Pipeline.required "content" string
+        |> Pipeline.required "completed" bool
+        |> Pipeline.required "editing" bool
 
 
 visibiltyDecoder : Decoder Visibility
 visibiltyDecoder =
-    Json.Decode.string
-        |> Json.Decode.andThen
+    Decode.string
+        |> Decode.andThen
             (\str ->
                 case str of
                     "All" ->
-                        Json.Decode.succeed All
+                        Decode.succeed All
 
                     "Active" ->
-                        Json.Decode.succeed Active
+                        Decode.succeed Active
 
                     "Completed" ->
-                        Json.Decode.succeed Completed
+                        Decode.succeed Completed
 
                     other ->
-                        Json.Decode.fail <| "Unknown visibility: " ++ other
+                        Decode.fail <| "Unknown visibility: " ++ other
             )
 
 
@@ -94,7 +94,7 @@ visibiltyDecoder =
 ---- Saving to Local Storage using Ports and Encoding the Model----
 
 
-port setStorage : Json.Encode.Value -> Cmd msg
+port setStorage : Encode.Value -> Cmd msg
 
 
 updateWithStorage : Msg -> Model -> ( Model, Cmd Msg )
@@ -108,38 +108,38 @@ updateWithStorage msg model =
     )
 
 
-modelEncoder : Model -> Json.Encode.Value
+modelEncoder : Model -> Encode.Value
 modelEncoder model =
-    Json.Encode.object
-        [ ( "todos", Json.Encode.list todoEncoder model.todos )
-        , ( "uid", Json.Encode.int model.uid )
-        , ( "inputText", Json.Encode.string model.inputText )
-        , ( "editingText", Json.Encode.string model.editingText )
+    Encode.object
+        [ ( "todos", Encode.list todoEncoder model.todos )
+        , ( "uid", Encode.int model.uid )
+        , ( "inputText", Encode.string model.inputText )
+        , ( "editingText", Encode.string model.editingText )
         , ( "visibility", visibilityEncoder model.visibility )
         ]
 
 
-todoEncoder : Todo -> Json.Encode.Value
+todoEncoder : Todo -> Encode.Value
 todoEncoder todo =
-    Json.Encode.object
-        [ ( "id", Json.Encode.int todo.id )
-        , ( "content", Json.Encode.string todo.content )
-        , ( "completed", Json.Encode.bool todo.completed )
-        , ( "editing", Json.Encode.bool todo.editing )
+    Encode.object
+        [ ( "id", Encode.int todo.id )
+        , ( "content", Encode.string todo.content )
+        , ( "completed", Encode.bool todo.completed )
+        , ( "editing", Encode.bool todo.editing )
         ]
 
 
-visibilityEncoder : Visibility -> Json.Encode.Value
+visibilityEncoder : Visibility -> Encode.Value
 visibilityEncoder visibility =
     case visibility of
         All ->
-            Json.Encode.string "All"
+            Encode.string "All"
 
         Active ->
-            Json.Encode.string "ACtive"
+            Encode.string "Active"
 
         Completed ->
-            Json.Encode.string "Completed"
+            Encode.string "Completed"
 
 
 
@@ -329,12 +329,12 @@ onEsc msg =
 
         isEsc code =
             if code == escKey then
-                Json.Decode.succeed msg
+                Decode.succeed msg
 
             else
-                Json.Decode.fail "not ESC"
+                Decode.fail "not ESC"
     in
-    on "keydown" (Json.Decode.andThen isEsc keyCode)
+    on "keydown" (Decode.andThen isEsc keyCode)
 
 
 
